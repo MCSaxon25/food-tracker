@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -431,7 +432,7 @@ async function scanRecipeImage(dataUrl) {
       })
     });
     const data = await res.json();
-    const text = (data.content||[]).map(b=>b.text||'').join('').trim();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
     if (text === 'NOT_A_RECIPE') { status.className='status error'; status.textContent="Doesn't look like a recipe. Try a clearer photo."; return; }
     document.getElementById('recipe-ingredients').value = text;
     status.className = 'status success';
