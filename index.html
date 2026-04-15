@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Food Trigger Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0efe9;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --text: #1a1a1a;
+    --text2: #555;
+    --text3: #999;
+    --teal: #1D9E75;
+    --teal-bg: #E1F5EE;
+    --teal-text: #0F6E56;
+    --amber-bg: #FAEEDA;
+    --amber-text: #854F0B;
+    --amber-border: #BA7517;
+    --red-bg: #FAECE7;
+    --red-text: #993C1D;
+    --green-bg: #EAF3DE;
+    --green-text: #3B6D11;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg2: #2a2a28;
+      --bg3: #323230;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --text: #f0efe9;
+      --text2: #aaa;
+      --text3: #666;
+      --teal-bg: #085041;
+      --teal-text: #9FE1CB;
+      --amber-bg: #633806;
+      --amber-text: #FAC775;
+      --red-bg: #712B13;
+      --red-text: #F5C4B3;
+      --green-bg: #27500A;
+      --green-text: #C0DD97;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 17px; font-weight: 500; }
+  header span { font-size: 13px; color: var(--text3); }
+  .container { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; background: var(--bg2); padding: 4px; border-radius: var(--radius-lg); }
+  .tab { flex: 1; padding: 8px 12px; border: none; border-radius: var(--radius); font-size: 14px; cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s; }
+  .tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 12px; }
+  label { font-size: 12px; color: var(--text3); display: block; margin-bottom: 5px; margin-top: 14px; text-transform: uppercase; letter-spacing: 0.04em; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=datetime-local], select, textarea {
+    width: 100%; padding: 9px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius);
+    font-size: 14px; background: var(--bg); color: var(--text); outline: none; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+  textarea { height: 70px; resize: none; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sym-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .sym-btn { padding: 5px 12px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: 20px; cursor: pointer; background: transparent; color: var(--text2); transition: all 0.12s; }
+  .sym-btn.sel { background: var(--teal-bg); color: var(--teal-text); border-color: var(--teal); }
+  .sev-wrap { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .sev-btn { width: 38px; height: 38px; border-radius: 50%; border: 0.5px solid var(--border2); cursor: pointer; font-size: 13px; font-weight: 500; background: transparent; color: var(--text2); transition: all 0.12s; }
+  .sev-btn.sel { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-border); }
+  .sev-hint { font-size: 12px; color: var(--text3); }
+  .btn { width: 100%; margin-top: 12px; padding: 11px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: transparent; font-size: 14px; cursor: pointer; color: var(--text); font-family: inherit; transition: background 0.12s; }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { border-color: var(--teal); color: var(--teal-text); font-weight: 500; }
+  .btn-primary:hover { background: var(--teal-bg); }
+  .btn-danger { border-color: #E24B4A; color: #A32D2D; }
+  .btn-danger:hover { background: #FCEBEB; }
+  .upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 24px 16px; text-align: center; cursor: pointer; margin-top: 6px; transition: background 0.12s; }
+  .upload-zone:hover { background: var(--bg2); }
+  .upload-zone p { font-size: 13px; color: var(--text3); margin-top: 4px; }
+  .upload-zone strong { font-size: 14px; color: var(--text); }
+  #preview-img { max-width: 100%; max-height: 200px; border-radius: var(--radius); margin-top: 12px; display: none; }
+  .status { font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .status.loading { color: #185FA5; }
+  .status.success { color: var(--teal-text); }
+  .status.error { color: #A32D2D; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 16px 0; }
+  .log-item { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; background: var(--bg); }
+  .log-meta { font-size: 12px; color: var(--text3); margin-bottom: 5px; }
+  .log-foods { font-size: 14px; font-weight: 500; }
+  .log-syms { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+  .badge-1 { background: var(--green-bg); color: var(--green-text); }
+  .badge-2 { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-3 { background: var(--red-bg); color: var(--red-text); }
+  .log-notes { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .empty { text-align: center; padding: 40px 0; color: var(--text3); font-size: 14px; }
+  .section-hdr { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; }
+  .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 14px; }
+  .stat-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .stat-val { font-size: 22px; font-weight: 500; }
+  .trigger-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .trigger-row:last-child { border-bottom: none; }
+  .trigger-name { font-size: 14px; }
+  .trigger-bar-wrap { width: 120px; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .trigger-bar { height: 6px; background: var(--teal); border-radius: 3px; }
+  .trigger-count { font-size: 13px; color: var(--text3); min-width: 28px; text-align: right; }
+  .api-banner { background: var(--amber-bg); border: 0.5px solid var(--amber-border); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--amber-text); margin-bottom: 14px; display: none; }
+  .api-banner a { color: var(--amber-text); font-weight: 500; }
+  #api-key-wrap { margin-bottom: 12px; }
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 1fr; }
+    .dash-grid { grid-template-columns: repeat(2, 1fr); }
+    header h1 { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Food Trigger Tracker</h1>
+    <span>Log meals · identify patterns</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div id="api-key-wrap">
+    <div class="card" id="api-setup-card">
+      <label>Anthropic API key (for recipe scanning &amp; AI analysis)</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" />
+      <p style="font-size:12px;color:var(--text3);margin-top:6px;">Your key is stored only in your browser (localStorage). Get one free at <a href="https://console.anthropic.com" target="_blank" style="color:var(--teal-text);">console.anthropic.com</a>.</p>
+      <button class="btn btn-primary" onclick="saveApiKey()">Save key</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('log')">Log</button>
+    <button class="tab" onclick="switchTab('recipe')">Recipe scan</button>
+    <button class="tab" onclick="switchTab('history')">History</button>
+    <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
+  </div>
+
+  <!-- LOG TAB -->
+  <div id="tab-log">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Date &amp; time</label>
+          <input type="datetime-local" id="entry-time" />
+        </div>
+        <div>
+          <label>Meal type</label>
+          <select id="meal-type">
+            <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option><option>Drink</option>
+          </select>
+        </div>
+      </div>
+      <label>Foods eaten</label>
+      <textarea id="foods" placeholder="e.g. oat milk latte, avocado toast with tomatoes, OJ"></textarea>
+      <label>Symptoms</label>
+      <div class="sym-grid" id="sym-grid">
+        <button class="sym-btn" onclick="toggleSym(this)">Bloating</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Stomach pain</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Nausea</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Heartburn</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Headache</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Fatigue</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Skin reaction</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Congestion</button>
+        <button class="sym-btn" onclick="toggleSym(this)">Brain fog</button>
+        <button class="sym-btn" onclick="toggleSym(this)">None</button>
+      </div>
+      <label>Severity</label>
+      <div class="sev-wrap">
+        <button class="sev-btn" onclick="setSev(this,1)">1</button>
+        <button class="sev-btn" onclick="setSev(this,2)">2</button>
+        <button class="sev-btn" onclick="setSev(this,3)">3</button>
+        <span class="sev-hint">mild → severe</span>
+      </div>
+      <label>Notes (optional)</label>
+      <input type="text" id="notes" placeholder="stress, sleep, eating out, medications…" />
+      <button class="btn btn-primary" onclick="saveEntry()">Save entry</button>
+    </div>
+  </div>
+
+  <!-- RECIPE TAB -->
+  <div id="tab-recipe" style="display:none;">
+    <div class="card">
+      <p style="font-size:14px;color:var(--text2);margin-bottom:14px;">Upload a recipe photo. I'll extract the ingredients, flag potential triggers, and optionally pre-fill your log.</p>
+      <label>Recipe photo</label>
+      <div class="upload-zone" onclick="document.getElementById('recipe-file').click()">
+        <strong>Click to upload</strong>
+        <p>JPG, PNG, WEBP — recipe card, cookbook page, or screenshot</p>
+        <input type="file" id="recipe-file" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
+      </div>
+      <img id="preview-img" alt="Recipe preview" />
+      <div class="status" id="scan-status"></div>
+      <hr class="divider" />
+      <label>Extracted ingredients</label>
+      <textarea id="recipe-ingredients" placeholder="Ingredients will appear here after scanning…" style="height:100px;"></textarea>
+      <label>Recipe name (optional)</label>
+      <input type="text" id="recipe-name" placeholder="e.g. Pasta primavera" />
+      <button class="btn btn-primary" onclick="flagTriggers()" style="margin-top:12px;">Flag potential triggers →</button>
+      <button class="btn" onclick="prefillLog()">Pre-fill food log with these ingredients</button>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn btn-primary" style="margin-top:0;" onclick="analyzeLog()">Analyze for patterns →</button>
+      <button class="btn" style="margin-top:0;flex:0 0 auto;width:auto;padding:11px 16px;" onclick="exportCSV()">Export CSV</button>
+    </div>
+    <div id="log-list"></div>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div id="tab-dashboard" style="display:none;">
+    <div id="dash-content"></div>
+  </div>
+
+</div>
+
+<!-- TRIGGER ANALYSIS MODAL -->
+<div id="trigger-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--bg);border-radius:var(--radius-lg);max-width:560px;width:100%;padding:24px;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="font-size:16px;font-weight:500;">Trigger analysis</h2>
+      <button onclick="closeTriggerModal()" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:var(--text2);">×</button>
+    </div>
+    <div id="trigger-result" style="font-size:14px;line-height:1.7;color:var(--text2);white-space:pre-wrap;"></div>
+  </div>
+</div>
+
+<script>
+const SYMS = new Set();
+let SEV = null;
+let entries = [];
+
+try { entries = JSON.parse(localStorage.getItem('ftk_entries') || '[]'); } catch(e) {}
+
+function getApiKey() { return localStorage.getItem('ftk_api_key') || ''; }
+
+function saveApiKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (!k) { alert('Please enter your API key.'); return; }
+  localStorage.setItem('ftk_api_key', k);
+  document.getElementById('api-setup-card').innerHTML = '<p style="font-size:14px;color:var(--text2);">API key saved. <button onclick="clearKey()" style="background:none;border:none;color:var(--teal-text);cursor:pointer;font-size:14px;text-decoration:underline;">Remove</button></p>';
+}
+
+function clearKey() {
+  localStorage.removeItem('ftk_api_key');
+  location.reload();
+}
+
+(function initKeyUI() {
+  const k = getApiKey();
+  if (k) {
+    document.getElementById('api-setup-card').innerHTML = '<p style="font-size:14px;color:var(--text2);">API key saved. <button onclick="clearKey()" style="background:none;border:none;color:var(--teal-text);cursor:pointer;font-size:14px;text-decoration:underline;">Remove</button></p>';
+  }
+})();
+
+const now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById('entry-time').value = now.toISOString().slice(0,16);
+
+function switchTab(t) {
+  ['log','recipe','history','dashboard'].forEach(id => {
+    document.getElementById('tab-'+id).style.display = 'none';
+  });
+  document.getElementById('tab-'+t).style.display = '';
+  document.querySelectorAll('.tab').forEach((b,i) => {
+    b.classList.toggle('active', ['log','recipe','history','dashboard'][i] === t);
+  });
+  if (t === 'history') renderLog();
+  if (t === 'dashboard') renderDashboard();
+}
+
+function toggleSym(btn) {
+  btn.classList.toggle('sel');
+  if (btn.classList.contains('sel')) SYMS.add(btn.textContent);
+  else SYMS.delete(btn.textContent);
+}
+
+function setSev(btn, n) {
+  document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  SEV = n;
+}
+
+function saveEntry() {
+  const foods = document.getElementById('foods').value.trim();
+  if (!foods) { alert('Please enter what you ate.'); return; }
+  const entry = {
+    id: Date.now(),
+    time: document.getElementById('entry-time').value,
+    meal: document.getElementById('meal-type').value,
+    foods,
+    symptoms: [...SYMS],
+    severity: SEV,
+    notes: document.getElementById('notes').value.trim()
+  };
+  entries.push(entry);
+  persist();
+  document.getElementById('foods').value = '';
+  document.getElementById('notes').value = '';
+  SYMS.clear(); SEV = null;
+  document.querySelectorAll('.sym-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
+  showToast('Entry saved');
+}
+
+function persist() {
+  try { localStorage.setItem('ftk_entries', JSON.stringify(entries)); } catch(e) {}
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  if (!entries.length) { el.innerHTML = '<div class="empty">No entries yet. Start logging meals.</div>'; return; }
+  el.innerHTML = [...entries].reverse().map(e => {
+    const sc = e.severity === 1 ? 'badge-1' : e.severity === 2 ? 'badge-2' : 'badge-3';
+    const syms = (e.symptoms||[]).filter(s => s !== 'None');
+    return `<div class="log-item">
+      <div class="log-meta">${formatTime(e.time)} · ${e.meal}</div>
+      <div class="log-foods">${e.foods}</div>
+      <div class="log-syms">${syms.length ? syms.map(s=>`<span class="badge ${sc}">${s}</span>`).join('') : '<span style="font-size:12px;color:var(--text3);">No symptoms</span>'}</div>
+      ${e.notes ? `<div class="log-notes">${e.notes}</div>` : ''}
+      <button onclick="deleteEntry(${e.id})" style="background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;margin-top:8px;padding:0;">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  entries = entries.filter(e => e.id !== id);
+  persist();
+  renderLog();
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  const d = new Date(t);
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+}
+
+function renderDashboard() {
+  const el = document.getElementById('dash-content');
+  if (!entries.length) { el.innerHTML = '<div class="empty">Log some meals to see your dashboard.</div>'; return; }
+
+  const withSymptoms = entries.filter(e => (e.symptoms||[]).some(s=>s!=='None') && e.symptoms.length);
+  const symCount = {};
+  withSymptoms.forEach(e => (e.symptoms||[]).filter(s=>s!=='None').forEach(s => { symCount[s] = (symCount[s]||0)+1; }));
+  const sorted = Object.entries(symCount).sort((a,b)=>b[1]-a[1]);
+  const maxCount = sorted[0]?.[1] || 1;
+
+  el.innerHTML = `
+    <div class="dash-grid">
+      <div class="stat-card"><div class="stat-label">Total entries</div><div class="stat-val">${entries.length}</div></div>
+      <div class="stat-card"><div class="stat-label">With symptoms</div><div class="stat-val">${withSymptoms.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Symptom rate</div><div class="stat-val">${Math.round(withSymptoms.length/entries.length*100)}%</div></div>
+    </div>
+    <div class="card">
+      <div class="section-hdr">Most frequent symptoms</div>
+      ${sorted.length ? sorted.map(([sym,count]) => `
+        <div class="trigger-row">
+          <span class="trigger-name">${sym}</span>
+          <div class="trigger-bar-wrap"><div class="trigger-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
+          <span class="trigger-count">${count}x</span>
+        </div>`).join('') : '<p style="font-size:14px;color:var(--text3);">No symptoms logged yet.</p>'}
+    </div>
+    <button class="btn btn-primary" style="margin-top:0;" onclick="analyzeLog()">AI pattern analysis →</button>
+  `;
+}
+
+async function analyzeLog() {
+  if (!entries.length) { alert('Log a few meals first.'); return; }
+  const key = getApiKey();
+  if (!key) { alert('Add your Anthropic API key at the top of the page first.'); return; }
+  const summary = entries.map(e =>
+    `${e.time} [${e.meal}]: ${e.foods}${(e.symptoms||[]).length ? ` → symptoms: ${e.symptoms.join(', ')} (severity ${e.severity||'unrated'})` : ' → no symptoms'}${e.notes ? ` | notes: ${e.notes}` : ''}`
+  ).join('\n');
+
+  showTriggerModal('Analyzing your log…');
+  try {
+    const res = await callClaude(key, `You are a nutrition and food sensitivity expert. Analyze this food and symptom log for patterns. Identify which foods or food groups correlate with symptoms, any timing patterns, and specific suspected triggers worth investigating. Be specific and actionable.\n\nLog:\n${summary}`);
+    showTriggerModal(res);
+  } catch(e) {
+    showTriggerModal('Error: ' + e.message);
+  }
+}
+
+async function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+    document.getElementById('preview-img').src = dataUrl;
+    document.getElementById('preview-img').style.display = 'block';
+    await scanRecipeImage(dataUrl);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function scanRecipeImage(dataUrl) {
+  const key = getApiKey();
+  if (!key) { alert('Add your Anthropic API key at the top of the page first.'); return; }
+  const status = document.getElementById('scan-status');
+  status.className = 'status loading';
+  status.textContent = 'Reading recipe…';
+  const base64 = dataUrl.split(',')[1];
+  const mime = dataUrl.split(';')[0].split(':')[1];
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: mime, data: base64 } },
+          { type: 'text', text: 'Extract ALL ingredients from this recipe as a clean comma-separated list. Include quantities if visible. If not a recipe, reply NOT_A_RECIPE. Reply with only the ingredient list, nothing else.' }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).map(b=>b.text||'').join('').trim();
+    if (text === 'NOT_A_RECIPE') { status.className='status error'; status.textContent="Doesn't look like a recipe. Try a clearer photo."; return; }
+    document.getElementById('recipe-ingredients').value = text;
+    status.className = 'status success';
+    status.textContent = 'Ingredients extracted. Review and edit if needed.';
+  } catch(e) {
+    status.className = 'status error';
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function flagTriggers() {
+  const ingredients = document.getElementById('recipe-ingredients').value.trim();
+  const name = document.getElementById('recipe-name').value.trim();
+  if (!ingredients) { alert('No ingredients to analyze. Upload a recipe photo first.'); return; }
+  const key = getApiKey();
+  if (!key) { alert('Add your Anthropic API key first.'); return; }
+  showTriggerModal('Analyzing ingredients…');
+  try {
+    const res = await callClaude(key, `I track food sensitivities. Here are ingredients from ${name ? `"${name}"` : 'a recipe'}: ${ingredients}\n\nFlag any common trigger categories present (gluten, dairy, high-FODMAP, nightshades, histamine, sulfites, salicylates, etc.) and briefly explain why each might be problematic.`);
+    showTriggerModal(res);
+  } catch(e) {
+    showTriggerModal('Error: ' + e.message);
+  }
+}
+
+function prefillLog() {
+  const ingredients = document.getElementById('recipe-ingredients').value.trim();
+  const name = document.getElementById('recipe-name').value.trim();
+  if (!ingredients) { alert('No ingredients yet.'); return; }
+  document.getElementById('foods').value = name ? `${name}: ${ingredients}` : ingredients;
+  switchTab('log');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function callClaude(key, prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return (data.content||[]).map(b=>b.text||'').join('').trim();
+}
+
+function showTriggerModal(text) {
+  document.getElementById('trigger-result').textContent = text;
+  document.getElementById('trigger-modal').style.display = 'flex';
+}
+
+function closeTriggerModal() {
+  document.getElementById('trigger-modal').style.display = 'none';
+}
+
+function exportCSV() {
+  if (!entries.length) { alert('No entries to export.'); return; }
+  const rows = [['Date','Meal','Foods','Symptoms','Severity','Notes']];
+  entries.forEach(e => rows.push([e.time, e.meal, e.foods, (e.symptoms||[]).join('; '), e.severity||'', e.notes||'']));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'food-trigger-log.csv';
+  a.click();
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:200;opacity:0;transition:opacity 0.2s;';
+  document.body.appendChild(t);
+  setTimeout(() => t.style.opacity = '1', 10);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 2000);
+}
+</script>
+</body>
+</html>
